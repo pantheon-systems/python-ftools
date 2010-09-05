@@ -22,6 +22,12 @@ static PyObject *fincore_fincore(PyObject *self, PyObject *args) {
 		return NULL;
 	}
 
+    // cannot mmap a zero size file
+    if ( file_stat.st_size == 0 ) {
+        PyErr_SetFromErrno(PyExc_IOError);
+        return NULL;
+    }
+
 	file_mmap = mmap((void *)0, file_stat.st_size, PROT_NONE, MAP_SHARED, fd, 0);
 
 	if(file_mmap == MAP_FAILED) {
