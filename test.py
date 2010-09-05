@@ -10,6 +10,9 @@ def main():
 
     cached = 0
 
+    t = fincore.fincore_ratio(fd.fileno())
+    print "fincore ratio %s:%s" % (t[0],t[1])
+
     vec = fincore.fincore(fd.fileno())
     fd.close()
 
