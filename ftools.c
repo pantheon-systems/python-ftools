@@ -3,8 +3,7 @@
 #include <unistd.h>
 #include <sys/mman.h>
 
-// fincore.fincore(fileno)
-static PyObject *fincore_fincore(PyObject *self, PyObject *args) {
+static PyObject *ftools_fincore(PyObject *self, PyObject *args) {
     PyObject *ret;
     int fd;
     void *file_mmap;
@@ -53,8 +52,7 @@ static PyObject *fincore_fincore(PyObject *self, PyObject *args) {
     return ret;
 }
 
-// fincore.fincore_ratio(fileno)
-static PyObject *fincore_fincore_ratio(PyObject *self, PyObject *args) {
+static PyObject *ftools_fincore_ratio(PyObject *self, PyObject *args) {
     int fd;
     void *file_mmap;
     unsigned char *mincore_vec;
@@ -111,13 +109,13 @@ static PyObject *fincore_fincore_ratio(PyObject *self, PyObject *args) {
     return Py_BuildValue("(ii)", cached, total_pages);
 }
 
-static PyMethodDef FincoreMethods[] = {
-    {"fincore", fincore_fincore, METH_VARARGS, "Return the mincore structure for the given file."},
-    {"fincore_ratio", fincore_fincore_ratio, METH_VARARGS, "Return a int two tuple indicating file in page cache ratio."},
+static PyMethodDef FtoolsMethods[] = {
+    {"fincore", ftools_fincore, METH_VARARGS, "Return the mincore structure for the given file."},
+    {"fincore_ratio", ftools_fincore_ratio, METH_VARARGS, "Return a int two tuple indicating file in page cache ratio."},
     {NULL, NULL, 0, NULL}
 };
 
-PyMODINIT_FUNC initfincore(void) {
-    (void)Py_InitModule("fincore", FincoreMethods);
+PyMODINIT_FUNC initftools(void) {
+    (void)Py_InitModule("ftools", FtoolsMethods);
 
 }
