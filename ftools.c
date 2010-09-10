@@ -2,6 +2,7 @@
 
 #include <unistd.h>
 #include <sys/mman.h>
+#include <linux/fadvise.h>
 
 static PyObject *ftools_fincore(PyObject *self, PyObject *args) {
     PyObject *ret;
@@ -107,6 +108,32 @@ static PyObject *ftools_fincore_ratio(PyObject *self, PyObject *args) {
 
     int total_pages = (int)ceil( (double)file_stat.st_size / (double)page_size );
     return Py_BuildValue("(ii)", cached, total_pages);
+}
+
+// ftools.fadvise(fd,
+static PyObject *ftools_fadvise(PyObject *self, PyObject *args, PyObject *keywds) {
+    int fd;
+    int offset = 0;
+    int length = 0;
+
+    static char *kwlist[] = {"offset", "length", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "i|ii", kwlist, 
+                                     &fd, &offset, &length)) {
+        return NULL; 
+    }
+
+    if(fstat(fd, &file_stat) < 0) {
+        PyErr_SetString(PyExc_IOError, "Could not fstat file");
+        return NULL;
+    }
+
+    //loff_t offset = 0;
+    if(length == 0) {
+        length = file_stat.st_size;
+    }
+    //loff_t length = file_stat.st_size;
+
 }
 
 static PyMethodDef FtoolsMethods[] = {
