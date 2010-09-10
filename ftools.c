@@ -91,7 +91,6 @@ static PyObject *ftools_fincore_ratio(PyObject *self, PyObject *args) {
     }
 
     if(mincore(file_mmap, file_stat.st_size, mincore_vec) != 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
         PyErr_SetString(PyExc_OSError, "Could not call mincore for file");
         return NULL;
     }
@@ -112,15 +111,38 @@ static PyObject *ftools_fincore_ratio(PyObject *self, PyObject *args) {
 
 // ftools.fadvise(fd,
 static PyObject *ftools_fadvise(PyObject *self, PyObject *args, PyObject *keywds) {
-    int fd;
-    int offset = 0;
-    int length = 0;
+    int* fd;
+    int* offset = 0;
+    int* length = 0;
+    char* mode = "";
+    char* errstr;
 
     static char *kwlist[] = {"offset", "length", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, keywds, "i|ii", kwlist, 
-                                     &fd, &offset, &length)) {
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "is|ii", kwlist, 
+                                     &fd, &mode, &offset, &length)) {
         return NULL; 
+    }
+
+    if ( strcmp( mode , "POSIX_FADV_NORMAL" ) == 0 ) {
+        mode = POSIX_FADV_NORMAL;
+    } else if ( strcmp( mode , "POSIX_FADV_RANDOM" ) == 0 ) {
+        mode = POSIX_FADV_RANDOM;
+    } else if ( strcmp( mode , "POSIX_FADV_SEQUENTIAL" ) == 0 ) {
+        mode = POSIX_FADV_SEQUENTIAL;
+    } else if ( strcmp( mode , "POSIX_FADV_WILLNEED" ) == 0 ) {
+        mode = POSIX_FADV_DONTNEED;
+    } else if ( strcmp( mode , "POSIX_FADV_DONTNEED" ) == 0 ) {
+        mode = POSIX_FADV_DONTNEED;
+    } else if ( strcmp( mode , "POSIX_FADV_NOREUSE" ) == 0 ) {
+        mode = POSIX_FADV_NOREUSE;
+    } else {
+       if( (asprintf(&errstr, "%s is an invalid mode", mode)) == -1)
+        {   
+            return PyErr_NoMemory();
+        } 
+        PyErr_SetString(PyExc_TypeError, errstr);
+        return NULL;
     }
 
     if(fstat(fd, &file_stat) < 0) {
@@ -128,17 +150,31 @@ static PyObject *ftools_fadvise(PyObject *self, PyObject *args, PyObject *keywds
         return NULL;
     }
 
-    //loff_t offset = 0;
-    if(length == 0) {
-        length = file_stat.st_size;
+    if(*length == 0) {
+        *length = file_stat.st_size;
     }
-    //loff_t length = file_stat.st_size;
 
+    long result = syscall( SYS_fadvise64, *fd, *offset, *length , *mode );
+
+    if ( result != 0 ) {
+        if ( result != -1 ) {
+            errno=result;
+            PyErr_SetFromErrno(PyExc_OSError);
+            return NULL;
+        } else {
+            PyErr_SetString(PyExc_TypeError, "Unable to fadvise");
+            return NULL;
+        }
+    }
+
+    Py_INCREF(Py_None);
+    return Py_None;
 }
 
 static PyMethodDef FtoolsMethods[] = {
     {"fincore", ftools_fincore, METH_VARARGS, "Return the mincore structure for the given file."},
     {"fincore_ratio", ftools_fincore_ratio, METH_VARARGS, "Return a int two tuple indicating file in page cache ratio."},
+    {"fadvise", ftools_fadvise, METH_VARARGS | METH_KEYWORDS, "fadvise system call for Python!"},
     {NULL, NULL, 0, NULL}
 };
 
