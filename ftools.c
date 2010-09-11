@@ -107,7 +107,9 @@ static PyObject *ftools_fincore_ratio(PyObject *self, PyObject *args) {
     munmap(file_mmap, file_stat.st_size);
 
     int total_pages = (int)ceil( (double)file_stat.st_size / (double)page_size );
-    return Py_BuildValue("(ii)", cached, total_pages);
+    PyObject* myTuple = Py_BuildValue("(ii)", cached, total_pages);
+    Py_INCREF(myTuple);
+    return myTuple;
 }
 
 // ftools.fadvise
@@ -135,7 +137,7 @@ static PyObject *ftools_fadvise(PyObject *self, PyObject *args, PyObject *keywds
     } else if ( strcmp( str_mode , "POSIX_FADV_SEQUENTIAL" ) == 0 ) {
         mode = POSIX_FADV_SEQUENTIAL;
     } else if ( strcmp( str_mode , "POSIX_FADV_WILLNEED" ) == 0 ) {
-        mode = POSIX_FADV_DONTNEED;
+        mode = POSIX_FADV_WILLNEED;
     } else if ( strcmp( str_mode , "POSIX_FADV_DONTNEED" ) == 0 ) {
         mode = POSIX_FADV_DONTNEED;
     } else if ( strcmp( str_mode , "POSIX_FADV_NOREUSE" ) == 0 ) {

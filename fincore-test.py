@@ -9,21 +9,10 @@ def main():
         return
 
     fd = file(sys.argv[1], 'r')
-
-    cached = 0
-
-    t = ftools.fincore_ratio(fd.fileno())
-    print "fincore ratio %s:%s" % (t[0],t[1])
-
-    vec = ftools.fincore(fd.fileno())
+    
+    cached, total = ftools.fincore_ratio(fd.fileno())
+    print "fincore_ratio: %i of %i pages cached (%.00f%%)" % (cached, total, (float(cached) / float(total)) * 100.0)
     fd.close()
-
-    for page in vec:
-        if ord(page) & 0x01:
-            cached += 1
-
-    total = len(vec)
-    print '%i of %i pages cached (%.00f%%)' % (cached, total, (float(cached) / float(total)) * 100.0)
 
 if __name__ == '__main__':
     main()

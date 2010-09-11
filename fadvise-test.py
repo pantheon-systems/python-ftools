@@ -4,14 +4,14 @@ import ftools
 import sys
 
 def main():
-    if len(sys.argv) < 2:
-        print 'Usage: %s <filename>' % sys.argv[0]
+    if len(sys.argv) < 3:
+        print 'Usage: %s <filename> <mode>' % sys.argv[0]
         return
 
     fd = file(sys.argv[1], 'r')
 
 
-    ftools.fadvise(fd.fileno(),mode="POSIX_FADV_DONTNEED")
+    ftools.fadvise(fd.fileno(),mode=sys.argv[2])
 
     fd.close()
 
