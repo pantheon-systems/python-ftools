@@ -107,9 +107,7 @@ static PyObject *ftools_fincore_ratio(PyObject *self, PyObject *args) {
     munmap(file_mmap, file_stat.st_size);
 
     int total_pages = (int)ceil( (double)file_stat.st_size / (double)page_size );
-    PyObject* myTuple = Py_BuildValue("(ii)", cached, total_pages);
-    Py_INCREF(myTuple);
-    return myTuple;
+    return Py_BuildValue("(ii)", cached, total_pages);
 }
 
 // ftools.fadvise
