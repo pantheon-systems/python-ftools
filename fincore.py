@@ -22,6 +22,16 @@ def main():
     page_size = resource.getpagesize()
     print "filename\tfile size\ttotal pages\tpages cached\tcached size\tpercentage cached"
 
+    if options.directory:
+        for (path, dirs, files) in os.walk(options.directory):
+            for myfile in files:
+                f = os.path.join(path,myfile)
+                fd = file(f,'r')
+                pages_cached, pages_total = ftools.fincore_ratio(fd.fileno())
+                file_size = os.fstat(fd.fileno())[stat.ST_SIZE]
+                fd.close()
+                print "%s\t%s\t%s\t%s\t%s\t%s" % (f, file_size, pages_total, pages_cached, (pages_cached * page_size), ((float(pages_cached) / float(pages_total)) * 100.0))
+
     for f in args:
         fd = file(f, 'r')
         pages_cached, pages_total = ftools.fincore_ratio(fd.fileno())
