@@ -1,0 +1,49 @@
+
+
+
+What is this anyway?
+
+Python ftools implements some useful system calls for use in Python programs.
+The mincore system call (called fincore and fincore_ration in Python ftools)
+tells you how many pages of a file are in filesystem page-cache.
+The fadvise system call can manipulate filesystem page-cache for a given file.
+
+build:
+    python setup.py build
+
+If you do not install the Python ftools library system wide then
+make sure it is in your PYTHONPATH like this:
+
+    PYTHONPATH=build/lib.linux-x86_64-2.5/ ./fincore setup.py
+
+
+Usage: fincore [options]
+
+Determine how much of a file is in filesystem page-cache.
+
+Options:
+  -h, --help            show this help message and exit
+  -d DIRECTORY, --directory=DIRECTORY
+                        Recursively descend into a directory
+
+
+Usage: fadvise [options]
+
+Advise the Linux kernel to manipulate filesystem page cache for files or
+directories
+
+Options:
+  -h, --help            show this help message and exit
+  -m MODE, --mode=MODE  The modes are: normal - No special treatment. random -
+                        Expect page references in random order. sequential -
+                        Expect page references in sequential order. willneed -
+                        Expect access in the near future. dontneed - Do not
+                        expect access in the near future. Subsequent access of
+                        pages in this range will succeed, but will result
+                        either in reloading of the memory contents from the
+                        underlying mapped file or zero-fill-in-demand pages
+                        for mappings without an underlying file. noreuse -
+                        NOTE: This mode is currently a no-op! Access data only
+                        once.
+  -d DIRECTORY, --directory=DIRECTORY
+                        Recursively descend into a directory
