@@ -1,11 +1,31 @@
 #!/usr/bin/env python
 
+import sys
+sys.path.append("/usr/local/python-ftools-lib")
 import ftools
 import resource
 import optparse
-import sys
 import os
 import stat
+
+
+def convert_bytes(bytes):
+    bytes = float(bytes)
+    if bytes >= 1099511627776:
+        terabytes = bytes / 1099511627776
+        size = '%.2fT' % terabytes
+    elif bytes >= 1073741824:
+        gigabytes = bytes / 1073741824
+        size = '%.2fG' % gigabytes
+    elif bytes >= 1048576:
+        megabytes = bytes / 1048576
+        size = '%.2fM' % megabytes
+    elif bytes >= 1024:
+        kilobytes = bytes / 1024
+        size = '%.2fK' % kilobytes
+    else:
+        size = '%.2fb' % bytes
+    return size
 
 
 def matrix_to_string(matrix, header):
@@ -60,6 +80,8 @@ def main():
 
     parser.add_option('-d', '--directory', dest='directory', default=None,
                       help="Recursively descend into a directory")
+    parser.add_option('-s', '--summary', dest='summary', default=False, action='store_true',
+                      help="Summarize report")
 
     options, args = parser.parse_args()
 
@@ -76,8 +98,10 @@ def main():
             for myfile in files:
                 f = os.path.join(path,myfile)
                 fd = file(f,'r')
-                pages_cached, pages_total = ftools.fincore_ratio(fd.fileno())
                 file_size = os.fstat(fd.fileno())[stat.ST_SIZE]
+                if file_size == 0:
+                    continue
+                pages_cached, pages_total = ftools.fincore_ratio(fd.fileno())
                 fd.close()
                 rows.append([f, file_size, pages_total, pages_cached, (pages_cached * page_size), (float(pages_cached) / float(pages_total)) * 100.0])
 
@@ -88,9 +112,19 @@ def main():
         fd.close()
         rows.append([f, file_size, pages_total, pages_cached, (pages_cached * page_size), (float(pages_cached) / float(pages_total)) * 100.0])
 
+    rows = sorted(rows, key=lambda t:t[5], reverse=True)
     result = matrix_to_string(rows, header)
     print result
 
-
+    if options.summary:
+        file_size_total, pages_total, pages_cached_total, pages_cached_size_total = map(sum, zip(*rows)[1:-1])
+        sum_header = ['total file sizes','total file pages', 'total pages cached', 'total cached pages size', 'total percentage cached']
+        total_percentage_cached = (float(pages_cached_total) / float(pages_total)) * 100.0
+        summary_row = [convert_bytes(file_size_total), pages_total, pages_cached_total, convert_bytes(pages_cached_size_total), total_percentage_cached]
+        summary_line = matrix_to_string([summary_row], sum_header)
+        print summary_line
+ 
 if __name__ == '__main__':
     main()
+
+
