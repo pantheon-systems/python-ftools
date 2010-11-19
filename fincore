@@ -100,6 +100,7 @@ def main():
                 fd = file(f,'r')
                 file_size = os.fstat(fd.fileno())[stat.ST_SIZE]
                 if file_size == 0:
+                    fd.close()
                     continue
                 pages_cached, pages_total = ftools.fincore_ratio(fd.fileno())
                 fd.close()
@@ -107,8 +108,11 @@ def main():
 
     for f in args:
         fd = file(f, 'r')
-        pages_cached, pages_total = ftools.fincore_ratio(fd.fileno())
         file_size = os.fstat(fd.fileno())[stat.ST_SIZE]
+        if file_size == 0:
+            fd.close()
+            continue
+        pages_cached, pages_total = ftools.fincore_ratio(fd.fileno())
         fd.close()
         rows.append([f, file_size, pages_total, pages_cached, (pages_cached * page_size), (float(pages_cached) / float(pages_total)) * 100.0])
 
