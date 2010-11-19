@@ -62,15 +62,14 @@ def main():
         parser.print_help()
         return 1
 
-    hist_log_dir = options.hist_log_dir
     evict_time   = int(options.evict_time)
     files        = args
 
     if options.summary:
-        region_cache_stats(files, evict_time, hist_log_dir)
+        region_cache_stats(files, evict_time, options.hist_log_dir)
 
     if options.evict:
-        evict_historical_regions(files, evict_time, hist_log_dir)
+        evict_historical_regions(files, evict_time, options.hist_log_dir)
 
     return 0
 
@@ -131,7 +130,7 @@ def evict_historical_regions(files, evict_time, hist_log_dir):
 # for a given file evict pages from filesystem
 # page cache before specified offset
 def evict_early_region_from_file(pathname, hist_offset):
-    print "fadvise %s offset=0 length=%s" % (pathname, length)
+    print "fadvise %s offset=0 length=%s" % (pathname, hist_offset)
     fd = file(pathname, 'r')
     ftools.fadvise(fd.fileno(),mode='POSIX_FADV_DONTNEED', offset=0, length=hist_offset)
     fd.close()
@@ -185,18 +184,20 @@ def historical_file_size(pathname, nsecs, log_dir):
     best_time   = 0
     best_size   = 0
 
-    report_dir = os.path.join(log_dir, os.path.basename(pathname))
-    files = os.listdir(report_dir)
+    target_file = os.path.basename(pathname)
+    log_files = os.listdir(log_dir)
 
-    for f in files:
-        pathname = os.path.join(report_dir, f)
-        statinfo = os.stat(pathname)
-        # if it's a regular file
-        if stat.S_ISREG(statinfo[stat.ST_MODE]):
-            fh = open(pathname, 'r')
-            for line in fh:
-                my_time, my_size = map(int,line.split())
-                best_time, best_size = compare_times(my_time, my_size, best_time, best_size, target_time)
+    for f in log_files:
+        log_path = os.path.join(log_dir, f)
+        log_fh = open(log_path, 'r')
+
+        for line in log_fh:
+            my_file, my_time, my_size = line.split()
+            if my_file != target_file:
+                continue
+            best_time, best_size = compare_times(int(my_time), int(my_size), best_time, best_size, target_time)
+
+        log_fh.close()
 
     return best_size
 

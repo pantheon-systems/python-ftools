@@ -26,40 +26,46 @@ import sys
 import time
 import stat
 import math
+import optparse
 
 def resolve ( value, resolution ):
     return int( math.floor( float(value)/resolution ) * resolution )
 
 def main():
 
-    # must create if it doesn't exist
-    log_dir = '/var/spool/filestats'
+    parser = optparse.OptionParser()
+    parser.add_option("--hist-log-dir", dest="hist_log_dir", default=None, action="store", type="string",
+                      help="historical log directory")
 
-    day_secs = 24 * 60 * 60
+    parser.add_option("--dir-to-monitor", dest="monitor_dir", default=None, action="store", type="string",
+                      help="director to monitor")
 
-    #if len(sys.argv) != 2:
-    #    print "usage: %s <directory>" % sys.argv[0]
-    #    return 1
+    options, args = parser.parse_args()
 
-    mydir = '/var/lib/mysql/blogindex'
-    files = os.listdir(mydir)
+    if not options.hist_log_dir or not options.monitor_dir:
+        parser.print_help()
+        return 1
+
+    log_dir = options.hist_log_dir
+
+    hour_secs = 60 * 60
 
     now = time.time()
-    segment_time = resolve(now, day_secs)
- 
+    segment_time = resolve(now, hour_secs)
+    current_log_name = "%s.log" % segment_time
+    log_pathname = os.path.join(options.hist_log_dir, current_log_name)
+    log_fh = open(log_pathname,'a')
+
+    files = os.listdir(options.monitor_dir)
+
     for f in files:
-        pathname = os.path.join(mydir, f)
+        pathname = os.path.join(options.monitor_dir, f)
         statinfo = os.stat(pathname)
         # if it's a regular file
         if stat.S_ISREG(statinfo[stat.ST_MODE]):
-            report_dir = os.path.join(log_dir, f)
-            if not os.path.exists(report_dir):
-                os.mkdir(report_dir)
-            filename = "%s.log" % segment_time
-            file_path = os.path.join(report_dir, filename)
-            fh = open(file_path, 'a')
-            fh.write("%s %s\n" % (int(now), statinfo.st_size))
-            fh.close()
+            log_fh.write("%s %s %s\n" % (f, int(now), statinfo.st_size))
+
+    log_fh.close()
 
 if __name__ == '__main__':
     sys.exit(main())
