@@ -27,7 +27,6 @@ import stat
 import optparse
 
 import sys
-sys.path.append("/usr/local/python-ftools-lib")
 import ftools
 
 
