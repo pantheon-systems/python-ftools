@@ -79,8 +79,10 @@ def main():
 
     parser.add_option('-d', '--directory', dest='directory', default=None,
                       help="Recursively descend into a directory")
-    parser.add_option('-s', '--summary', dest='summary', default=False, action='store_true',
-                      help="Summarize report")
+    parser.add_option('-s', '--summary', dest='summary', default=True, action='store_false',
+                      help="Disable summary report")
+    parser.add_option('-v', '--verbose', dest='verbose', default=False, action='store_true',
+                      help="Verbose output, show stats on every file")
 
     options, args = parser.parse_args()
 
@@ -96,7 +98,11 @@ def main():
         for (path, dirs, files) in os.walk(options.directory):
             for myfile in files:
                 f = os.path.join(path,myfile)
-                fd = file(f,'r')
+                try:
+                    fd = file(f,'r')
+                except IOError:
+                    print "Error opening: ", f
+                    continue
                 file_size = os.fstat(fd.fileno())[stat.ST_SIZE]
                 if file_size == 0:
                     fd.close()
@@ -115,9 +121,10 @@ def main():
         fd.close()
         rows.append([f, file_size, pages_total, pages_cached, (pages_cached * page_size), (float(pages_cached) / float(pages_total)) * 100.0])
 
-    rows = sorted(rows, key=lambda t:t[5], reverse=True)
-    result = matrix_to_string(rows, header)
-    print result
+    if options.verbose:
+        rows = sorted(rows, key=lambda t:t[5], reverse=True)
+        result = matrix_to_string(rows, header)
+        print result
 
     if options.summary:
         file_size_total, pages_total, pages_cached_total, pages_cached_size_total = map(sum, zip(*rows)[1:-1])
