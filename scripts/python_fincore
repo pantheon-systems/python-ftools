@@ -26,6 +26,10 @@ def convert_bytes(bytes):
         size = '%.2fb' % bytes
     return size
 
+def get_device(path):
+    """retruns a the device id containing a given path"""
+    return os.stat(path).st_dev
+
 
 def matrix_to_string(matrix, header):
     """
@@ -83,6 +87,8 @@ def main():
                       help="Disable summary report")
     parser.add_option('-v', '--verbose', dest='verbose', default=False, action='store_true',
                       help="Verbose output, show stats on every file")
+    parser.add_option('-x', '--xdev', dest='xdev', default=False, action='store_true',
+                      help="Don't descend directories on other filesystems.")
 
     options, args = parser.parse_args()
 
@@ -94,8 +100,12 @@ def main():
     header = ['filename', 'file size', 'total pages', 'pages cached', 'cached size', 'percentage cached']
     rows = []
 
+
     if options.directory:
+        basedir_device = get_device(options.directory)
         for (path, dirs, files) in os.walk(options.directory):
+            if get_device(path) != basedir_device and options.xdev:
+                continue
             for myfile in files:
                 f = os.path.join(path,myfile)
                 try:

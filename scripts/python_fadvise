@@ -42,9 +42,13 @@ noreuse - NOTE: This mode is currently a no-op! Access data only once.""")
     if options.directory:
         for (path, dirs, files) in os.walk(options.directory):
             for myfile in files:
-                fd = file(os.path.join(path,myfile),'r')
-                ftools.fadvise(fd.fileno(),mode=mode)
-                fd.close()
+                try:
+                    fd = file(os.path.join(path,myfile),'r')
+                    ftools.fadvise(fd.fileno(),mode=mode)
+                except IOError:
+                    continue
+                finally:
+                    fd.close()
 
     for f in args:
         fd = file(f, 'r')
